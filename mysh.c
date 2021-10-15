@@ -9,6 +9,7 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 #include <dirent.h>
+#include <stdlib.h>
 
 #define MAXLIST 100 //max number of commands to be supported
 #define MAXCOM 10000 // max number of letters to be supported
