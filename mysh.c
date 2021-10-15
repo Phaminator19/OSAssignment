@@ -11,8 +11,8 @@
 #include <dirent.h>
 #include <stdlib.h>
 
-#define MAXLIST 100 //max number of commands to be supported
-#define MAXCOM 10000 // max number of letters to be supported
+#define MAXLIST 10000 //max number of letters to be supported
+#define MAXCOM 100 // max number of commands to be supported
 #define clear() printf("\033[H\033[J")
 
 char currentdir[1024];
@@ -46,10 +46,8 @@ void init_shell() {
 //         return 1;
 //     }
 // }
-
-char *read_line(void) {
+char *read_line(char *buffer) {
     int bufsize = MAXCOM;
-    char *buffer = malloc(sizeof(char) * bufsize);
     int position = 0;
     int c;
     
@@ -59,15 +57,18 @@ char *read_line(void) {
         exit(EXIT_FAILURE);
     }
     
-    char* buf;
-    buf = readline("\n# ");
+    // char* buf;
+    // buf = readline("\n# ");
+    
 
     while(1) {
-        c = getchar();
-
+       
+        c = getc(stdin);
+        
         //if we hit EOF, replace it with a null character and return.
         if (c==EOF || c == '\n') {
             buffer[position] = '\0';
+            // printf("%s", buf);
             return buffer;
         }
         else {
@@ -86,7 +87,41 @@ char *read_line(void) {
         }
     }
 
+}
 
+//Parse the command line
+void parse_command_line(char *line) {
+    int bufsize = MAXLIST; 
+    int position = 0;
+    char **tokens = malloc(bufsize * sizeof(char));
+    char *token; 
+    int i;
+
+    while (strcpy(token, strtok(line, " ")) != NULL)
+    {
+        strcpy(tokens[position], token);
+        position++;
+    }
+
+    printf("cmd: %s variables: ", tokens[0]);
+    for (i=1; i <= position; i++)
+    {
+        printf("%s", tokens[i]);
+    }
+}
+
+
+void process_commands(void) {
+    char line[1000]; 
+
+    int bufsize = MAXCOM;
+    char *buffer = malloc(sizeof(char) * bufsize);
+
+    while(1) {
+        buffer = readline("# ");
+        
+        parse_command_line(read_line(buffer));
+    }
 }
 
 //Function that the system command is executed
@@ -133,5 +168,10 @@ void movetoDir(char *Directory) {
 
 int main() {
     init_shell();
-    return 0; 
+    char line[MAXLIST];
+
+    //this line will take the user command string line and copy into a variable called "line"
+    process_commands();
+
+    return 0;
 }
