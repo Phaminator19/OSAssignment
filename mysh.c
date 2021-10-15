@@ -14,6 +14,8 @@
 #define MAXCOM 10000 // max number of letters to be supported
 #define clear() printf("\033[H\033[J")
 
+char currentdir[1024];
+
 //Function to do a greeting shell
 void init_shell() {
     clear();
@@ -66,22 +68,22 @@ void execArgs(char** parsed) {
 
 
 void movetoDir(char *Directory) {
-
+    // Check input string
     if((Directory != NULL) && (Directory[0] == '\0')) {
-        printf("Directory does not exist.")
+        fprintf(stderr, "Directory does not exist.\n")
+        return;
     }
 
-    char currentdir[1024]
-    getcwd(currentdir, sizeof(currentdir))
-
-    //check whether the directory is exist
-    // if (strcmp(currentdir, Directory) == 0) {
-    //     currentdir = Directory;
-    // }
-
-
-
-    
+    // Check whether the directory is exist
+    // If directory exists, save in global variable
+    if (getcwd(Directory, sizeof(Directory)) == NULL) {    
+        fprintf(stderr, "Please enter an existing directory.\n");
+        return;
+    }
+    else {
+        strcpy(currentdir, Directory);
+        return;
+    }
 }
 
 
