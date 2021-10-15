@@ -32,18 +32,60 @@ void init_shell() {
 }
 
 //Function to take input
-int takeInput(char* str) {
-    char* buf;
+// int takeInput(char* str) {
+//     char* buf;
 
+//     buf = readline("\n# ");
+//     if (strlen(buf) != 0) {
+//         add_history(buf);
+//         strcpy(str, buf);
+//         return 0;
+//     }
+//     else {
+//         return 1;
+//     }
+// }
+
+char *read_line(void) {
+    int bufsize = MAXCOM;
+    char *buffer = malloc(sizeof(char) * bufsize);
+    int position = 0;
+    int c;
+    
+    //if allocation is bad, it will print a bad statement
+    if (!buffer) {
+        fprintf(stderr, "allocation error\n");
+        exit(EXIT_FAILURE);
+    }
+    
+    char* buf;
     buf = readline("\n# ");
-    if (strlen(buf) != 0) {
-        add_history(buf);
-        strcpy(str, buf);
-        return 0;
+
+    while(1) {
+        c = getchar();
+
+        //if we hit EOF, replace it with a null character and return.
+        if (c==EOF || c == '\n') {
+            buffer[position] = '\0';
+            return buffer;
+        }
+        else {
+            buffer[position] = c;
+        }
+        position++;
     }
-    else {
-        return 1;
+
+    if (position >= MAXCOM) {
+        bufsize += MAXCOM;
+        buffer = realloc(buffer, bufsize);
+
+        if (!buffer) {
+            fprintf(stderr, "Fail to Re-allocate more blocks\n");
+            exit(EXIT_FAILURE);
+        }
     }
+
+
 }
 
 //Function that the system command is executed
@@ -51,14 +93,14 @@ void execArgs(char** parsed) {
     int pid = fork();
 
     if(pid == -1) {
-        printf("\nFailed Forking child...")
+        printf("\nFailed Forking child...");
         return;
     }
 
     else if (pid == 0) {
         //execution function in an if case. It will return -1 if not found or 1 if found
         if (execvp(parsed[0], parsed) < 0) {
-            printf("\nCould not execute command")
+            printf("\nCould not execute command");
         }
 
     }
@@ -70,7 +112,7 @@ void execArgs(char** parsed) {
 void movetoDir(char *Directory) {
     // Check input string
     if((Directory != NULL) && (Directory[0] == '\0')) {
-        fprintf(stderr, "Directory does not exist.\n")
+        fprintf(stderr, "Directory does not exist.\n");
         return;
     }
 
