@@ -25,8 +25,8 @@ void init_shell() {
     printf("\n\n\n\n*************************************");
     
     char *username = getenv("USER");
-    printf("\n\n\nUSER is: @%s", username)
-    printf("\n")
+    printf("\n\n\nUSER is: @%s", username);
+    printf("\n");
     sleep(1);
     clear();
 }
