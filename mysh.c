@@ -46,8 +46,9 @@ void init_shell() {
 //         return 1;
 //     }
 // }
-char *read_line(char *buffer) {
+char *read_line(void) {
     int bufsize = MAXCOM;
+    char *buffer = malloc(bufsize * sizeof(char));
     int position = 0;
     int c;
     
@@ -75,39 +76,50 @@ char *read_line(char *buffer) {
             buffer[position] = c;
         }
         position++;
-    }
+    
+        if (position >= MAXCOM) {
+            bufsize += MAXCOM;
+            buffer = realloc(buffer, bufsize);
 
-    if (position >= MAXCOM) {
-        bufsize += MAXCOM;
-        buffer = realloc(buffer, bufsize);
-
-        if (!buffer) {
-            fprintf(stderr, "Fail to Re-allocate more blocks\n");
-            exit(EXIT_FAILURE);
+            if (!buffer) {
+                fprintf(stderr, "Fail to Re-allocate more blocks\n");
+                exit(EXIT_FAILURE);
+            }
         }
     }
 
 }
 
 //Parse the command line
-void parse_command_line(char *line) {
+char** parse_command_line(char *line) {
     int bufsize = MAXLIST; 
     int position = 0;
-    char **tokens = malloc(bufsize * sizeof(char));
-    char *token; 
+    char **tokens = malloc(bufsize * sizeof(char*));
+    char *token = NULL; 
     int i;
+    
+    token = strtok(line, " ");
 
-    while (strcpy(token, strtok(line, " ")) != NULL)
+    while (token != NULL)
     {
-        strcpy(tokens[position], token);
+        tokens[position] = token;
         position++;
+
+        if (position >= MAXCOM) {
+            bufsize += MAXCOM;
+            tokens = realloc(tokens, bufsize * sizeof(char*));
+
+            if (!tokens) {
+                fprintf(stderr, "Fail to Re-allocate more blocks\n");
+                exit(EXIT_FAILURE);
+            }
+        }
+
+        token = strtok(NULL, " ");
     }
 
-    printf("cmd: %s variables: ", tokens[0]);
-    for (i=1; i <= position; i++)
-    {
-        printf("%s", tokens[i]);
-    }
+    tokens[position] = NULL;
+    return tokens;
 }
 
 
@@ -116,11 +128,14 @@ void process_commands(void) {
 
     int bufsize = MAXCOM;
     char *buffer = malloc(sizeof(char) * bufsize);
+    char **command = malloc(bufsize * sizeof(char*));
 
     while(1) {
-        buffer = readline("# ");
+        printf("# ");
+        buffer = read_line();
         
-        parse_command_line(read_line(buffer));
+        command = parse_command_line(buffer);
+        execArgs(command);
     }
 }
 
@@ -133,7 +148,7 @@ void execArgs(char** parsed) {
         return;
     }
 
-    else if (pid == 0) {
+    else if (pid == 0)
         //execution function in an if case. It will return -1 if not found or 1 if found
         if (execvp(parsed[0], parsed) < 0) {
             printf("\nCould not execute command");
