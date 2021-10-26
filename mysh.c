@@ -127,13 +127,13 @@ void execArgs(char** parsed) {
     int pid = fork();
 
     if(pid == -1) {
-        printf("\nFailed Forking child...");
+        printf("\nFailed Forking child...\n");
         return;
         
     }else if (pid == 0) {
         //execution function in an if case. It will return -1 if not found or 1 if found
         if (execvp(parsed[0], parsed) < 0) {
-            printf("\nCould not execute command");
+            printf("\nCould not execute command\n");
         }
         exit(0);
         
