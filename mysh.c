@@ -122,6 +122,28 @@ char** parse_command_line(char *line) {
     return tokens;
 }
 
+//Function that the system command is executed
+void execArgs(char** parsed) {
+    int pid = fork();
+
+    if(pid == -1) {
+        printf("\nFailed Forking child...");
+        return;
+        
+    }else if (pid == 0) {
+        //execution function in an if case. It will return -1 if not found or 1 if found
+        if (execvp(parsed[0], parsed) < 0) {
+            printf("\nCould not execute command");
+        }
+        exit(0);
+        
+    } else {
+        wait(NULL);
+        return;
+    }
+}
+
+
 
 void process_commands(void) {
     char line[1000]; 
@@ -139,24 +161,7 @@ void process_commands(void) {
     }
 }
 
-//Function that the system command is executed
-void execArgs(char** parsed) {
-    int pid = fork();
 
-    if(pid == -1) {
-        printf("\nFailed Forking child...");
-        return;
-    }
-
-    else if (pid == 0)
-        //execution function in an if case. It will return -1 if not found or 1 if found
-        if (execvp(parsed[0], parsed) < 0) {
-            printf("\nCould not execute command");
-        }
-
-    }
-
-}
 
 
 
