@@ -160,7 +160,15 @@ void movetoDir(char *Directory) {
     }
 }
 
+//Prints the value of the currentdir variable
+void whereami() {
+    printf("%s", currentdir);
+}
 
+//prints out the recently typed commands in reverse order with numbers.
+void history() {
+    
+}
 
 int main() {
     init_shell();
