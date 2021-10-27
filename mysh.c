@@ -22,30 +22,14 @@ void init_shell() {
     clear();
 
     printf("\n\n\n\t ***MY SHELL***");
-    printf("\n\n\n\t-Welcome to COP4600-");
-    printf("\n\n\n\n*************************************");
+    printf("\n\n\n\t- Welcome to COP4600- ASSIGNMENT #2 ");
+    printf("\n\n\n\n*******************************************");
     
-    char *username = getenv("USER");
-    printf("\n\n\nUSER is: @%s", username);
     printf("\n");
     sleep(1);
     clear();
 }
 
-//Function to take input
-// int takeInput(char* str) {
-//     char* buf;
-
-//     buf = readline("\n# ");
-//     if (strlen(buf) != 0) {
-//         add_history(buf);
-//         strcpy(str, buf);
-//         return 0;
-//     }
-//     else {
-//         return 1;
-//     }
-// }
 char *read_line(void) {
     int bufsize = MAXCOM;
     char *buffer = malloc(bufsize * sizeof(char));
@@ -58,10 +42,6 @@ char *read_line(void) {
         exit(EXIT_FAILURE);
     }
     
-    // char* buf;
-    // buf = readline("\n# ");
-    
-
     while(1) {
        
         c = getc(stdin);
@@ -161,10 +141,6 @@ void process_commands(void) {
     }
 }
 
-
-
-
-
 void movetoDir(char *Directory) {
     // Check input string
     if((Directory != NULL) && (Directory[0] == '\0')) {
@@ -190,7 +166,7 @@ int main() {
     init_shell();
     char line[MAXLIST];
 
-    //this line will take the user command string line and copy into a variable called "line"
+    //this line will process the command after initialize the shell
     process_commands();
 
     return 0;
