@@ -313,6 +313,23 @@ void dalek(int pid)
     kill(pid, SIGKILL);
 }
 
+//made by Quang
+void start(char *program_name) {
+    int pid = fork();
+    // 
+    //this would check if the argument starts with "/" the shell should interpret it as full path then.
+    if (strchr(program_name, '/') != NULL) {
+        //execv
+        if (pid == 0) {
+            char *argv[3] = {, ,NULL};
+            execv(program_name[0], )
+        }
+    }
+    else {
+        //execve
+    }
+}
+
 int main() {
     init_shell();
     char line[MAXLIST];
