@@ -226,54 +226,54 @@ void movetoDir(char *Directory) {
 void whereami() {
     printf("%s\n", currentdir);
 }
+// Made by Quang Pham
+// struct stack_struct {
+//     int top;
+//     unsigned capacity;
+//     char* commands;
+// };
 
-struct stack_struct {
-    int top;
-    unsigned capacity;
-    char* commands;
-};
+// typedef struct stack_struct stack;
 
-typedef struct stack_struct stack;
+// stack *createStack(unsigned capacity) {
+//     stack *st = malloc(sizeof(stack));
 
-stack *createStack(unsigned capacity) {
-    stack *st = malloc(sizeof(stack));
+//     st->capacity = capacity;
+//     st->top = -1;
+//     st->commands = (char*)malloc(st->capacity * sizeof(char));
 
-    st->capacity = capacity;
-    st->top = -1;
-    st->commands = (char*)malloc(st->capacity * sizeof(char));
+//     return st;
+// }
 
-    return st;
-}
+// int is_empty(stack *st) {
+//     return st->top == -1; 
+// }
 
-int is_empty(stack *st) {
-    return st->top == -1; 
-}
+// int is_full(stack *st) {
+//     return st->top == st->capacity - 1;
+// }
 
-int is_full(stack *st) {
-    return st->top == st->capacity - 1;
-}
+// stack *pop (stack *st) {
+//     if(is_empty(st)) {
+//         return INT_MIN;
+//     }
 
-stack *pop (stack *st) {
-    if(is_empty(st)) {
-        return INT_MIN;
-    }
-
-    return st->commands[st->top--];
+//     return st->commands[st->top--];
 
     
-}
+// }
 
-void push(stack *st, char* commands) {
+// void push(stack *st, char* commands) {
     
-    if(is_full(st)) {
-        printf("the stack is full\n");
-        return;
-    }
-    else {
-        increment = st->top + 1;
-        st->commands[increment] = commands;
-    }
-}
+//     if(is_full(st)) {
+//         printf("the stack is full\n");
+//         return;
+//     }
+//     else {
+//         increment = st->top + 1;
+//         st->commands[increment] = commands;
+//     }
+// }
 
 
 
