@@ -18,7 +18,7 @@
        
 char* stack[MAXCOM];     
 int top = -1;
-FILE *history;            
+FILE *historyFile;            
 
 int isempty() {
 
@@ -36,12 +36,12 @@ int isfull() {
       return 0;
 }
 
-int replay(int num) {
+char* replay(int num) {
    return stack[top - num];
 }
 
 char* popCommand() {
-   int data;
+   char* data;
 	
    if(!isempty()) {
       data = stack[top];
@@ -52,7 +52,7 @@ char* popCommand() {
    }
 }
 
-int pushCommand(char* data) {
+char* pushCommand(char* data) {
 
    if(!isfull()) {
       top = top + 1;   
@@ -92,16 +92,16 @@ char *read_line(void) {
     size_t len = 0;
     ssize_t read;    
 
-    if(history = fopen("history.txt", "rw"))
+    if(historyFile = fopen("history.txt", "rw"))
     {
-        while ((read = getline(&line, &len, history)) != -1) 
+        while ((read = getline(&line, &len, historyFile)) != -1) 
         {
-            pushCommand(read);
+            pushCommand(line);
         }
     }
     else
     {
-        history = fopen("history.txt", "a");
+        historyFile = fopen("history.txt", "a");
     }
     
     while(1) {
@@ -278,7 +278,7 @@ void whereami() {
 
 
 //prints out the recently typed commands in reverse order with numbers.
-void history() {
+void checkHistory() {
     int i = 0;
     while(i <= top)
     {
@@ -294,7 +294,7 @@ void clearHistory()
     {
         popCommand();
     }
-    history = fopen("history.txt", "w");
+    historyFile = fopen("history.txt", "w");
 }
 
 // Terminates shell and saves history file
@@ -302,9 +302,9 @@ void byebye()
 {
     while(!isempty())
     {
-        fprintf(history, "%s\n", popCommand())
+        fprintf(historyFile, "%s\n", popCommand());
     }
-    fclose(history);
+    fclose(historyFile);
     exit(0);
 }
 
