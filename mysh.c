@@ -19,7 +19,30 @@
        
 char* stack[MAXCOM];     
 int top = -1;
-FILE *historyFile;            
+FILE *historyFile;
+
+int isempty();
+int isfull();
+char* replay(int num);
+char* popCommand();
+char* pushCommand(char* data);
+char** parse_command_line(char *line);
+void init_shell();
+char *read_line(void);
+void execArgs(char** parsed);
+int ownCmdHandler(char *buffer);
+void process_commands(void);
+void movetoDir(char *Directory);
+void whereami();
+void clearHistory();
+void checkHistory(bool flag);
+void byebye();
+void dalek(int pid);
+void start(char **command_tokens);
+void background(char **command_tokens);
+int isFullPath(char *path);
+
+char currentdir[1024];
 
 // Made by Zac
 int isempty() {
@@ -43,37 +66,75 @@ int isfull() {
 char* replay(int num) {
     if(num > top || num < 0)
     {
-        printf("Command does not exist. Please use a valid command.");
+        printf("Invalid history number.");
         return NULL;
     }
-   return stack[top - num];
+    return stack[top - num];
 }
 
 // Made by Zac
 char* popCommand() {
-   char* data;
+    char* data;
 	
-   if(!isempty()) {
-      data = stack[top];
-      top = top - 1;   
-      return data;
-   } else {
-      printf("Could not retrieve data, Stack is empty.\n");
-   }
+    if(!isempty()) 
+    {
+        data = stack[top];
+        top = top - 1;   
+        return data;
+    } 
+    else 
+    {
+        printf("Could not retrieve data, Stack is empty.\n");
+    }
 }
 
 // Made by Zac
 char* pushCommand(char* data) {
-
-   if(!isfull()) {
-      top = top + 1;   
-      stack[top] = data;
-   } else {
-      printf("Maximum number of commands met. Please clear your history\n");
-   }
+    if(!isfull()) 
+    {
+        top = top + 1;   
+        stack[top] = data;
+    } 
+    else 
+    {
+        printf("Maximum number of commands met. Please clear your history\n");
+    }
 }
 
-char currentdir[1024];
+//Parse the command line
+char** parse_command_line(char *line) {
+    int bufsize = MAXLIST; 
+    int position = 0;
+    char **tokens = malloc(bufsize * sizeof(char*));
+    char *token = NULL; 
+    int i;
+    char linetoread[MAXLIST];
+
+    strcpy(linetoread, line);
+    
+    token = strtok(linetoread, " ");
+
+    while (token != NULL)
+    {
+        tokens[position] = token;
+        position++;
+
+        if (position >= MAXCOM) {
+            bufsize += MAXCOM;
+            tokens = realloc(tokens, bufsize * sizeof(char*));
+
+            if (!tokens) {
+                fprintf(stderr, "Fail to Re-allocate more blocks\n");
+                exit(EXIT_FAILURE);
+            }
+        }
+
+        token = strtok(NULL, " ");
+    }
+
+    tokens[position] = NULL;
+    return tokens;
+}
 
 //Function to do a greeting shell
 void init_shell() {
@@ -86,6 +147,27 @@ void init_shell() {
     printf("\n");
     sleep(1);
     clear();
+
+    char line[MAXLIST];
+    int i = 0;
+
+    if(getcwd(currentdir, sizeof(currentdir)) == NULL) 
+    {
+        perror("Could not get current directory");
+        return;
+    }
+
+    if(historyFile = fopen("history.txt", "r+"))
+    {
+        while (fscanf(historyFile, "%s", line) != EOF) 
+        {
+            pushCommand(line);
+        }
+    }
+    else
+    {
+        historyFile = fopen("history.txt", "w+");
+    }
 }
 
 char *read_line(void) {
@@ -98,21 +180,6 @@ char *read_line(void) {
     if (!buffer) {
         fprintf(stderr, "allocation error\n");
         exit(EXIT_FAILURE);
-    }
-    char * line = NULL;
-    size_t len = 0;
-    ssize_t read;    
-
-    if(historyFile = fopen("history.txt", "r+"))
-    {
-        while ((read = getline(&line, &len, historyFile)) != -1) 
-        {
-            pushCommand(line);
-        }
-    }
-    else
-    {
-        historyFile = fopen("history.txt", "w+");
     }
     
     while(1) {
@@ -143,60 +210,106 @@ char *read_line(void) {
 
 }
 
-//Parse the command line
-char** parse_command_line(char *line) {
-    int bufsize = MAXLIST; 
-    int position = 0;
-    char **tokens = malloc(bufsize * sizeof(char*));
-    char *token = NULL; 
-    int i;
-    
-    token = strtok(line, " ");
-
-    while (token != NULL)
-    {
-        tokens[position] = token;
-        position++;
-
-        if (position >= MAXCOM) {
-            bufsize += MAXCOM;
-            tokens = realloc(tokens, bufsize * sizeof(char*));
-
-            if (!tokens) {
-                fprintf(stderr, "Fail to Re-allocate more blocks\n");
-                exit(EXIT_FAILURE);
-            }
-        }
-
-        token = strtok(NULL, " ");
-    }
-
-    tokens[position] = NULL;
-    return tokens;
-}
-
 //Function that the system command is executed
-void execArgs(char** parsed) {
-    int pid = fork();
+// void execArgs(char** parsed) {
+//     int pid = fork();
 
-    if(pid == -1) {
-        printf("\nFailed Forking child...\n");
-        return;
+//     if(pid == -1) {
+//         printf("\nFailed Forking child...\n");
+//         return;
         
-    }else if (pid == 0) {
-        //execution function in an if case. It will return -1 if not found or 1 if found
-        if (execvp(parsed[0], parsed) < 0) {
-            printf("\nCould not execute command\n");
+//     } else if (pid == 0) {
+//         //execution function in an if case. It will return -1 if not found or 1 if found
+//         if (execvp(parsed[0], parsed) < 0) {
+//             printf("Could not execute command\n");
+//         }
+//         exit(0);
+        
+//     } else {
+//         wait(NULL);
+//         return;
+//     }
+// }
+
+int ownCmdHandler(char *buffer) {
+    int NoOfOwnCmds = 8, i, switchOwnArg = 0;
+    char* ListOfOwnCmds[NoOfOwnCmds];
+    char* username;
+    char* cmd = NULL;
+    int parsedLength = -1;
+    char **parsed;
+
+    parsed = parse_command_line(buffer);
+
+    while(parsed[++parsedLength] != NULL) {}
+  
+    ListOfOwnCmds[0] = "byebye";
+    ListOfOwnCmds[1] = "movetodir";
+    ListOfOwnCmds[2] = "background";
+    ListOfOwnCmds[3] = "start";
+    ListOfOwnCmds[4] = "history";
+    ListOfOwnCmds[5] = "replay";
+    ListOfOwnCmds[6] = "dalek";
+    ListOfOwnCmds[7] = "whereami";
+  
+    for (i = 0; i < NoOfOwnCmds; i++) {
+        if (strcmp(parsed[0], ListOfOwnCmds[i]) == 0) {
+            switchOwnArg = i + 1;
+            break;
         }
-        exit(0);
-        
-    } else {
-        wait(NULL);
-        return;
     }
+  
+    switch (switchOwnArg) {
+    case 1:
+        pushCommand(buffer);
+        byebye();
+    case 2:
+        
+        movetoDir(parsed[1]);
+        return 1;
+    case 3:
+    
+        return 1;
+    case 4:
+        return 1;
+    case 5:
+        if(parsedLength > 1 && strcmp(parsed[1], "-c") == 0)
+        {
+            checkHistory(true);
+        }
+        else
+        {
+            checkHistory(false);
+        }
+        return 1;
+    case 6:
+        if (parsedLength > 1 && atoi(parsed[1]))
+        {
+            cmd = replay(atoi(parsed[1]));
+        }
+        if(cmd != NULL)
+        {
+            ownCmdHandler(cmd);
+        }
+        return 1;
+    case 7:
+        if (parsedLength && atoi(parsed[1]))
+        {
+            dalek(atoi(parsed[1]));
+        }
+        else
+        {
+            printf("Incorrect arguments. Please input a valid pid.\n");
+        }
+        return 1;
+    case 8:
+        whereami();
+        return 1;
+    default:
+        break;
+    }
+    return 0;
 }
-
-
 
 void process_commands(void) {
     char line[1000]; 
@@ -208,10 +321,9 @@ void process_commands(void) {
     while(1) {
         printf("# ");
         buffer = read_line();
+
+        ownCmdHandler(buffer);
         pushCommand(buffer);
-        
-        command = parse_command_line(buffer);
-        execArgs(command);
     }
 }
 
@@ -222,21 +334,35 @@ void movetoDir(char *Directory) {
         return;
     }
 
-    // Check whether the directory is exist
+    DIR *dir;
+    dir = opendir(Directory);
+
+    // Check whether the directory exists
     // If directory exists, save in global variable
-    if (getcwd(Directory, sizeof(Directory)) == NULL) {    
+    //if (getcwd(Directory, sizeof(Directory)) == NULL)
+    if (dir == NULL) {    
         fprintf(stderr, "Please enter an existing directory.\n");
         return;
     }
     else {
-        strcpy(currentdir, Directory);
+        // add / before adding next part of path
+        strcat(currentdir, "/");
+        strcat(currentdir, Directory);
+        // strcpy(currentdir, Directory);
         return;
     }
 }
 
 //Prints the value of the currentdir variable
 void whereami() {
-    printf("%s\n", currentdir);
+    if(currentdir == NULL) {
+        printf("No where.\n");
+        return;
+    }
+    else {
+        printf("%s\n", currentdir);
+    }
+    
 }
 
 // Made by Zac
@@ -263,18 +389,21 @@ void checkHistory(bool flag) {
     int i = 0;
     while(i <= top)
     {
-        printf("%d: %s", i, replay(i));
+        printf("%d: %s\n", i, replay(i));
         i++;
     }
+    return;
 }
 
 // Made by Zac
 // Terminates shell and saves history file
 void byebye()
 {
+    int i = top;
     while(!isempty())
     {
-        fprintf(historyFile, "%s\n", popCommand());
+        fprintf(historyFile, "%s\n", replay(top));
+        popCommand();
     }
     fclose(historyFile);
     exit(0);
@@ -282,37 +411,62 @@ void byebye()
 
 void dalek(int pid)
 {
-    kill(pid, SIGKILL);
+    int status = kill(pid, SIGKILL);
+    if (status == -1)
+    {
+        printf("Unable to kill the specified process.\n");
+    } else {
+        printf("Process killed.\n");
+    }
 }
+
+//void dalekall() {
+    
+//    printf("Exterminating %d processes: %d %d %d", )
+//}
 
 //made by Quang
 // is this relative or direct path?
-void start(char *program_name) {
+void start(char **command_tokens) {
     int pid = fork();
-    char *argv[] = {program_name, NULL};
-    
+    int size = sizeof(command_tokens) / sizeof(command_tokens[0]);
+    int i;
+    char* path;
+
+    for (i = 1; i < size; i++)
+    {
+        strcpy(command_tokens[i - 1], command_tokens[i]);
+    }
+    command_tokens[size - 1] = NULL;
+
+    path = command_tokens[0];
+
     // Find result of fork call.
     if(pid < 0)
     {
-        perror("FORK FAILED\n");
+        perror("Fork() failed.\n");
         return;
     }
     
+    
     else if (pid == 0) {
     //this would check if the argument starts with "/" the shell should interpret it as full path then.
-    if (strchr(program_name, '/') != NULL) {
+    if (isFullPath(path) != 0) {
             // Edits made by Joey
-            printf("Starting program: %s\n", program_name);
-            execv(argv[0], argv);
+            printf("Starting program: %s\n", path);
+            execv(path, command_tokens);
         }
     }
-    //if the argument isn't start with "/ the shell should interpreted as a relative path."
-    else if (strchr(program_name, '/') == NULL) {
-        printf("Starting program: %s\n", program_name);
-        execv(argv[0], argv);
+    //if the argument isn't start with "/ the shell should interpreted as a relative path.
+    else if (isFullPath(path) == 0) {
+        strcpy(path, currentdir);
+        strcat(path, "/");
+        strcat(path, command_tokens[0]);
+        printf("Starting program: %s\n", path);
+        execv(path, command_tokens);
     }
     else {
-        perror("the execution failed.\n");
+        perror("The execution failed.\n");
     }
 
     //check to see if we are in the parent process
@@ -329,67 +483,110 @@ void start(char *program_name) {
 //It is similar to the run command, but it immediately prints the PID of the program it 
 // started, and returns the prompt. 
 // Execute a program in the background
+// Made by Joey
+void background(char **command_tokens) {
+    
+    int pid = fork();
+    int size = sizeof(command_tokens) / sizeof(command_tokens[0]);
+    int i;
+    char* path;
 
+    for (i = 1; i < size; i++)
+    {
+        strcpy(command_tokens[i - 1], command_tokens[i]);
+    }
+    command_tokens[size - 1] = NULL;
 
+    path = command_tokens[0];
 
-int ownCmdHandler(char **parsed) {
-    int NoOfOwnCmds = 5, i, switchOwnArg = 0;
-    char* ListOfOwnCmds[NoOfOwnCmds];
-    char* username;  
-  
-    ListOfOwnCmds[0] = "byebye";
-    ListOfOwnCmds[1] = "movetodir";
-    ListOfOwnCmds[2] = "help";
-    ListOfOwnCmds[3] = "hello";
-    ListOfOwnCmds[4] = "history";
-    ListOfOwnCmds[5] = "replay";
-    ListOfOwnCmds[6] = "";
-  
-    for (i = 0; i < NoOfOwnCmds; i++) {
-        if (strcmp(parsed[0], ListOfOwnCmds[i]) == 0) {
-            switchOwnArg = i + 1;
-            break;
+    // Find result of fork call.
+    if(pid < 0)
+    {
+        perror("Fork() failed.\n");
+        return;
+    }
+    
+    
+    else if (pid == 0) {
+    //this would check if the argument starts with "/" the shell should interpret it as full path then.
+    if (isFullPath(path) != 0) {
+            printf("Starting program: %s\n", path);
+            execv(path, command_tokens);
         }
     }
-  
-    switch (switchOwnArg) {
-    case 1:
-        printf("\nGoodbye\n");
-        exit(0);
-    case 2:
-        if (sizeof(parsed) / sizeof(parsed[0]) > 1)
-        {
-            chdir(parsed[1]);
-        }
-        else
-        {
-            printf("Incorrect number of arguments.");
-        }
-        return 1;
-    case 3:
-        // openHelp();
-        return 1;
-    case 4:
-        // username = getenv("USER");
-        // printf("\nHello %s.\nMind that this is "
-        //     "not a place to play around."
-        //     "\nUse help to know more..\n",
-        //     username);
-        return 1;
-    case 5:
-        if(sizeof(parsed) / sizeof(parsed[0]) > 1 && strcmp(parsed[1], "-c") == 0)
-        {
-            checkHistory(true);
-        }
-        else
-        {
-            checkHistory(false);
-        }
-    default:
-        break;
+    //if the argument isn't start with "/ the shell should interpreted as a relative path.
+    else if (isFullPath(path) == 0) {
+        strcpy(path, currentdir);
+        strcat(path, "/");
+        strcat(path, command_tokens[0]);
+        printf("Starting program: %s\n", path);
+        execv(path, command_tokens);
     }
-  
-    return 0;
+    else {
+        perror("The execution failed.\n");
+    }
+
+    //check to see if we are in the parent process
+    if (pid == 0) {
+        perror("the given program could not be found\n");
+
+        return;
+    }
+    // // Deconstruct arguments to be accepted by 
+    // // the execv function call later. 
+    // // char *args[] = {program_name, NULL};
+    // // program_name: cmd arg1 arg2 arg3
+    // // args: path cmd arg1 arg2 arg3 NULL
+    // int size = sizeof(command_tokens) / sizeof(command_tokens[0]);
+    // int i;
+
+    // for (i = 1; i < size; i++)
+    // {
+    //     strcpy(command_tokens[i - 1], command_tokens[i]);
+    // }
+    // command_tokens[size - 1] = NULL;
+
+    // // 
+    // // array of char *'s
+    // char **args = (char**)malloc(sizeof(program_name) + sizeof(char*));
+    
+    
+    
+    // // args[0] = path
+    // // args[1] = array of strings terminated by NULL
+    // //char **args = malloc()
+    // strcpy(args[0]
+
+    // // Fork parent process.
+    // int pid = fork();
+    // // Check fork condition.
+    // if (pid < 0) {
+    //     printf("Fork() failed.\n");
+    //     return;
+    // }    
+    // else if (pid == 0) {
+    //     printf("Running a program in the background: %s\n", input[0]);
+    //     execv(args[0], args);
+    // }
+    // else {
+    //     printf("Error.\n");
+    //     return;
+    // }
+}
+
+// Made by Joey
+int isFullPath(char *path) {
+    if (path == NULL)
+    {
+        printf("Error.\n");
+        return 0;
+    }
+    // Indicate whether the path
+    // is full or relative.
+    if (path[0] == 47)
+        return 1;
+    else 
+        return 0;
 }
 
 int main() {
