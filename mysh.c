@@ -343,12 +343,22 @@ void process_commands(void) {
     }
 }
 
+// Edited by Joey
+// getting ../ to work and 
+// changing the directory
 void movetoDir(char *Directory) {
     char *path;
+    char **stack;
     // Check input string
     if((Directory == NULL) || (Directory[0] == '\0')) {
         fprintf(stderr, "No directory entered.\n");
         return;
+    }
+    
+    // Check for ../
+    if (Directory[0] == '.' && Directory[1] == '.' && Directory[2] == '/')
+    {
+        
     }
 
     DIR *dir;
@@ -417,11 +427,24 @@ void checkHistory(bool flag) {
 // Terminates shell and saves history file
 void byebye()
 {
+    // int i = top;
+    // while(!isempty())
+    // {
+    //     fprintf(historyFile, "%s\n", replay(i));
+    //     popCommand();
+    //     i--;
+    // }
+    // int i = 0;
+    // while(i <= top)
+    // {
+    //     fprintf(historyFile, "%s\n", replay(i));
+    //     i++;
+    // }
     int i = top;
-    while(!isempty())
+    while(i >= 0)
     {
-        fprintf(historyFile, "%s\n", replay(top));
-        popCommand();
+      fprintf(historyFile, "%s\n", replay(i));
+      i--;
     }
     fclose(historyFile);
     exit(0);
@@ -514,6 +537,7 @@ void start(char **command_tokens, int length)
 // Made by Joey
 void background(char **command_tokens, int length) {
     pid_t pid = fork();
+    FILE *file;
     int i;
     char path[MAXLIST];
     char* command[length+1];
@@ -524,9 +548,9 @@ void background(char **command_tokens, int length) {
         strcpy(command[i - 1], command_tokens[i]);
     }
 
-    if (pid == 0)
+    if (pid > 0)
     {
-        printf("PID: %d\n", getpid());
+        printf("PID: %d\n", pid);
     }
     
     command[length] = NULL;
@@ -539,26 +563,28 @@ void background(char **command_tokens, int length) {
         perror("Fork() failed.\n");
         return;
     }
-    
     else if (pid == 0) 
     {
-        //if the argument isn't start with "/ the shell should interpreted as a relative path and thus concatenate to turn it into full path.
+        //if the argument isn't start with "/ the shell should interpreted as a relative path.
         if (isFullPath(path) == 0) 
         {
             strcpy(path, currentdir);
             strcat(path, "/");
             strcat(path, command[0]);
         }
-          else if(isFullPath(path) == 2)
+        else if(isFullPath(path) == 2)
         {
-            printf("Please enter a program path.");
+            printf("Please enter a program path.\n");
         }
-        
-      
-        // else 
-        // {
-        //     printf("The execution failed.\n");
-        // }
+
+        if (!(file = fopen(path, "r")))
+        {
+            printf("Program could not be found.\n");
+        }
+        else if(execv(path, command) == -1)
+        {
+            printf("Program could not be executed.\n");
+        }
     }
 
     for (i = 0; i < length; i++)
