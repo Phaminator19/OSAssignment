@@ -139,14 +139,31 @@ char** parse_command_line(char *line) {
 //Function to do a greeting shell
 void init_shell() {
     clear();
-
+    
     printf("\n\n\n\t ***MY SHELL***");
-    printf("\n\n\n\t- Welcome to COP4600- ASSIGNMENT #2 ");
+    printf("\n\n\n\t- Welcome to COP4600 - ASSIGNMENT #2 -");
     printf("\n\n\n\n*******************************************");
     
     printf("\n");
     sleep(1);
-    clear();
+
+    int NoOfOwnCmds = 8;
+    char* ListOfOwnCmds[NoOfOwnCmds];
+    ListOfOwnCmds[0] = "byebye";
+    ListOfOwnCmds[1] = "movetodir";
+    ListOfOwnCmds[2] = "background";
+    ListOfOwnCmds[3] = "start";
+    ListOfOwnCmds[4] = "history";
+    ListOfOwnCmds[5] = "replay";
+    ListOfOwnCmds[6] = "dalek";
+    ListOfOwnCmds[7] = "whereami";
+
+    printf("List of commands:\n");
+    for(int i = 0; i < NoOfOwnCmds; i++) {
+        printf("# %d: %s\n", i, ListOfOwnCmds[i]);
+    }
+
+    printf("\n");
 
     char line[MAXLIST];
     int i = 0;
@@ -234,7 +251,7 @@ char *read_line(void) {
 int ownCmdHandler(char *buffer) {
     int NoOfOwnCmds = 8, i, switchOwnArg = 0;
     char* ListOfOwnCmds[NoOfOwnCmds];
-    char* username;
+    //char* username;
     char* cmd = NULL;
     int parsedLength = -1;
     char **parsed;
@@ -242,7 +259,7 @@ int ownCmdHandler(char *buffer) {
     parsed = parse_command_line(buffer);
 
     while(parsed[++parsedLength] != NULL) {}
-  
+    
     ListOfOwnCmds[0] = "byebye";
     ListOfOwnCmds[1] = "movetodir";
     ListOfOwnCmds[2] = "background";
@@ -251,6 +268,7 @@ int ownCmdHandler(char *buffer) {
     ListOfOwnCmds[5] = "replay";
     ListOfOwnCmds[6] = "dalek";
     ListOfOwnCmds[7] = "whereami";
+
   
     for (i = 0; i < NoOfOwnCmds; i++) {
         if (strcmp(parsed[0], ListOfOwnCmds[i]) == 0) {
@@ -264,7 +282,6 @@ int ownCmdHandler(char *buffer) {
         pushCommand(buffer);
         byebye();
     case 2:
-        
         movetoDir(parsed[1]);
         return 1;
     case 3:
@@ -328,15 +345,15 @@ void process_commands(void) {
 }
 
 void movetoDir(char *Directory) {
+    char *path;
     // Check input string
-    if((Directory != NULL) && (Directory[0] == '\0')) {
-        fprintf(stderr, "Directory does not exist.\n");
+    if((Directory == NULL) || (Directory[0] == '\0')) {
+        fprintf(stderr, "Empty directory nothing is changed.\n");
         return;
     }
 
     DIR *dir;
     dir = opendir(Directory);
-
     // Check whether the directory exists
     // If directory exists, save in global variable
     //if (getcwd(Directory, sizeof(Directory)) == NULL)
@@ -346,9 +363,11 @@ void movetoDir(char *Directory) {
     }
     else {
         // add / before adding next part of path
-        strcat(currentdir, "/");
-        strcat(currentdir, Directory);
-        // strcpy(currentdir, Directory);
+        path = strcat(currentdir, "/");
+        strcat(path, Directory);
+
+        strcpy(currentdir, path);
+        
         return;
     }
 }
