@@ -38,8 +38,8 @@ void clearHistory();
 void checkHistory(bool flag);
 void byebye();
 void dalek(int pid);
-void start(char **command_tokens);
-void background(char **command_tokens);
+void start(char **command_tokens, int length);
+void background(char **command_tokens, int length);
 int isFullPath(char *path);
 
 char currentdir[1024];
@@ -111,7 +111,7 @@ char** parse_command_line(char *line) {
     char linetoread[MAXLIST];
 
     strcpy(linetoread, line);
-    
+
     token = strtok(linetoread, " ");
 
     while (token != NULL)
@@ -131,7 +131,6 @@ char** parse_command_line(char *line) {
 
         token = strtok(NULL, " ");
     }
-
     tokens[position] = NULL;
     return tokens;
 }
@@ -206,7 +205,6 @@ char *read_line(void) {
         //if we hit EOF, replace it with a null character and return.
         if (c==EOF || c == '\n') {
             buffer[position] = '\0';
-            // printf("%s", buf);
             return buffer;
         }
         else {
@@ -258,8 +256,9 @@ int ownCmdHandler(char *buffer) {
 
     parsed = parse_command_line(buffer);
 
-    while(parsed[++parsedLength] != NULL) {}
-    
+    while(parsed[++parsedLength] != NULL) {
+    }
+
     ListOfOwnCmds[0] = "byebye";
     ListOfOwnCmds[1] = "movetodir";
     ListOfOwnCmds[2] = "background";
@@ -269,7 +268,6 @@ int ownCmdHandler(char *buffer) {
     ListOfOwnCmds[6] = "dalek";
     ListOfOwnCmds[7] = "whereami";
 
-  
     for (i = 0; i < NoOfOwnCmds; i++) {
         if (strcmp(parsed[0], ListOfOwnCmds[i]) == 0) {
             switchOwnArg = i + 1;
@@ -285,9 +283,10 @@ int ownCmdHandler(char *buffer) {
         movetoDir(parsed[1]);
         return 1;
     case 3:
-    
+        background(parsed, parsedLength);
         return 1;
     case 4:
+        start(parsed, parsedLength);
         return 1;
     case 5:
         if(parsedLength > 1 && strcmp(parsed[1], "-c") == 0)
@@ -338,7 +337,7 @@ void process_commands(void) {
     while(1) {
         printf("# ");
         buffer = read_line();
-
+        
         ownCmdHandler(buffer);
         pushCommand(buffer);
     }
@@ -348,7 +347,7 @@ void movetoDir(char *Directory) {
     char *path;
     // Check input string
     if((Directory == NULL) || (Directory[0] == '\0')) {
-        fprintf(stderr, "Empty directory nothing is changed.\n");
+        fprintf(stderr, "No directory entered.\n");
         return;
     }
 
@@ -446,56 +445,66 @@ void dalek(int pid)
 
 //made by Quang
 // is this relative or direct path?
-void start(char **command_tokens) {
-    int pid = fork();
-    int size = sizeof(command_tokens) / sizeof(command_tokens[0]);
+void start(char **command_tokens, int length) 
+{
+    pid_t pid = fork();
     int i;
-    char* path;
-
-    for (i = 1; i < size; i++)
-    {
-        strcpy(command_tokens[i - 1], command_tokens[i]);
-    }
-    command_tokens[size - 1] = NULL;
-
-    path = command_tokens[0];
+    char path[MAXLIST];
+    char* command[length+1];
+    FILE * file;
 
     // Find result of fork call.
     if(pid < 0)
     {
-        perror("Fork() failed.\n");
+        printf("Fork() failed.\n");
         return;
-    }
-    
-    
-    else if (pid == 0) {
-    //this would check if the argument starts with "/" the shell should interpret it as full path then.
-    if (isFullPath(path) != 0) {
-            // Edits made by Joey
-            printf("Starting program: %s\n", path);
-            execv(path, command_tokens);
-        }
-    }
-    //if the argument isn't start with "/ the shell should interpreted as a relative path.
-    else if (isFullPath(path) == 0) {
-        strcpy(path, currentdir);
-        strcat(path, "/");
-        strcat(path, command_tokens[0]);
-        printf("Starting program: %s\n", path);
-        execv(path, command_tokens);
-    }
-    else {
-        perror("The execution failed.\n");
     }
 
     //check to see if we are in the parent process
-    if (pid>0) {
+    if (pid > 0) 
+    {
         waitpid(pid, NULL, 0);
     }
-    if (pid == 0) {
-        perror("the given program could not be found\n");
 
-        return;
+    for (i = 1; i < length; i++)
+    {
+        command[i - 1] = malloc(sizeof(command_tokens[i]));
+        strcpy(command[i - 1], command_tokens[i]);
+    }
+    
+    command[length] = NULL;
+
+    strcpy(path, command[0]);
+    
+    // Check if we are in child
+    if (pid == 0) 
+    {
+         //if the argument isn't start with "/ the shell should interpreted as a relative path.
+        if (isFullPath(path) == 0) 
+        {
+            strcpy(path, currentdir);
+            strcat(path, "/");
+            strcat(path, command[0]);
+        }
+
+        else if(isFullPath(path) == 2)
+        {
+            printf("Please enter a program path.\n");
+        }
+
+        if (!(file = fopen(path, "r")))
+        {
+            printf("Program could not be found.\n");
+        }
+        else if(execv(path, command) == -1)
+        {
+            printf("Program could not be executed.\n");
+        }
+    }
+
+    for (i = 0; i < length; i++)
+    {
+        free(command[i]);
     }
 }
 
@@ -503,20 +512,26 @@ void start(char **command_tokens) {
 // started, and returns the prompt. 
 // Execute a program in the background
 // Made by Joey
-void background(char **command_tokens) {
-    
-    int pid = fork();
-    int size = sizeof(command_tokens) / sizeof(command_tokens[0]);
+void background(char **command_tokens, int length) {
+    pid_t pid = fork();
     int i;
-    char* path;
+    char path[MAXLIST];
+    char* command[length+1];
 
-    for (i = 1; i < size; i++)
+    for (i = 1; i < length; i++)
     {
-        strcpy(command_tokens[i - 1], command_tokens[i]);
+        command[i - 1] = malloc(sizeof(command_tokens[i]));
+        strcpy(command[i - 1], command_tokens[i]);
     }
-    command_tokens[size - 1] = NULL;
 
-    path = command_tokens[0];
+    if (pid == 0)
+    {
+        printf("PID: %d\n", getpid());
+    }
+    
+    command[length] = NULL;
+
+    strcpy(path, command[0]);
 
     // Find result of fork call.
     if(pid < 0)
@@ -525,32 +540,40 @@ void background(char **command_tokens) {
         return;
     }
     
-    
-    else if (pid == 0) {
-    //this would check if the argument starts with "/" the shell should interpret it as full path then.
-    if (isFullPath(path) != 0) {
-            printf("Starting program: %s\n", path);
-            execv(path, command_tokens);
+    else if (pid == 0) 
+    {
+        //if the argument isn't start with "/ the shell should interpreted as a relative path and thus concatenate to turn it into full path.
+        if (isFullPath(path) == 0) 
+        {
+            strcpy(path, currentdir);
+            strcat(path, "/");
+            strcat(path, command[0]);
         }
-    }
-    //if the argument isn't start with "/ the shell should interpreted as a relative path.
-    else if (isFullPath(path) == 0) {
-        strcpy(path, currentdir);
-        strcat(path, "/");
-        strcat(path, command_tokens[0]);
-        printf("Starting program: %s\n", path);
-        execv(path, command_tokens);
-    }
-    else {
-        perror("The execution failed.\n");
+          else if(isFullPath(path) == 2)
+        {
+            printf("Please enter a program path.");
+        }
+        
+      
+        // else 
+        // {
+        //     printf("The execution failed.\n");
+        // }
     }
 
-    //check to see if we are in the parent process
-    if (pid == 0) {
-        perror("the given program could not be found\n");
-
+    for (i = 0; i < length; i++)
+    {
+        free(command[i]);
+    }
+    
+    if (pid == 0) 
+    {
+        printf("the given program could not be found\n");
         return;
     }
+
+}
+
     // // Deconstruct arguments to be accepted by 
     // // the execv function call later. 
     // // char *args[] = {program_name, NULL};
@@ -591,14 +614,13 @@ void background(char **command_tokens) {
     //     printf("Error.\n");
     //     return;
     // }
-}
+
 
 // Made by Joey
 int isFullPath(char *path) {
     if (path == NULL)
     {
-        printf("Error.\n");
-        return 0;
+        return 2;
     }
     // Indicate whether the path
     // is full or relative.
