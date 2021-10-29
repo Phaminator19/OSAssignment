@@ -21,11 +21,14 @@ char* stack[MAXCOM];
 int top = -1;
 FILE *historyFile;
 
+//char* directory_stack[MAXCOM];
+//int d_top = -1;
+
 int isempty();
 int isfull();
 char* replay(int num);
 char* popCommand();
-char* pushCommand(char* data);
+void pushCommand(char* data);
 char** parse_command_line(char *line);
 void init_shell();
 char *read_line(void);
@@ -89,11 +92,12 @@ char* popCommand() {
 }
 
 // Made by Zac
-char* pushCommand(char* data) {
+void pushCommand(char* data) {
     if(!isfull()) 
     {
-        top = top + 1;   
-        stack[top] = data;
+        top = top + 1;
+        stack[top] = malloc(sizeof(data));   
+        strcpy(stack[top], data);
     } 
     else 
     {
@@ -169,7 +173,7 @@ void init_shell() {
 
     if(getcwd(currentdir, sizeof(currentdir)) == NULL) 
     {
-        perror("Could not get current directory");
+        printf("Could not get current directory");
         return;
     }
 
@@ -225,27 +229,6 @@ char *read_line(void) {
 
 }
 
-//Function that the system command is executed
-// void execArgs(char** parsed) {
-//     int pid = fork();
-
-//     if(pid == -1) {
-//         printf("\nFailed Forking child...\n");
-//         return;
-        
-//     } else if (pid == 0) {
-//         //execution function in an if case. It will return -1 if not found or 1 if found
-//         if (execvp(parsed[0], parsed) < 0) {
-//             printf("Could not execute command\n");
-//         }
-//         exit(0);
-        
-//     } else {
-//         wait(NULL);
-//         return;
-//     }
-// }
-
 int ownCmdHandler(char *buffer) {
     int NoOfOwnCmds = 8, i, switchOwnArg = 0;
     char* ListOfOwnCmds[NoOfOwnCmds];
@@ -299,7 +282,7 @@ int ownCmdHandler(char *buffer) {
         }
         return 1;
     case 6:
-        if (parsedLength > 1 && atoi(parsed[1]))
+        if (parsedLength > 1 && atoi(parsed[1]) >= 0)
         {
             cmd = replay(atoi(parsed[1]));
         }
@@ -347,38 +330,54 @@ void process_commands(void) {
 // getting ../ to work and 
 // changing the directory
 void movetoDir(char *Directory) {
-    char *path;
-    char **stack;
+    char path[MAXCOM];
+    char temp[MAXCOM];
+
     // Check input string
     if((Directory == NULL) || (Directory[0] == '\0')) {
         fprintf(stderr, "No directory entered.\n");
         return;
     }
-    
-    // Check for ../
-    if (Directory[0] == '.' && Directory[1] == '.' && Directory[2] == '/')
-    {
-        
+
+    // Check if full path or relative
+    if(isFullPath(Directory) == 0) {
+        // Append to current dir
+        strcpy(temp, currentdir);
+        strcat(temp, "/");
+        strcat(temp, Directory);
+    }
+    else {
+        // Change the current directory
+        strcpy(temp, Directory); 
+    }
+    // Check if path exists
+    if (realpath(temp, path) == NULL) {
+        printf("Error: Directory name doesn't exist.\n");
+        return; 
+    }
+    else {
+        // Copy temp into currentdir
+        strcpy(currentdir, path);
     }
 
-    DIR *dir;
-    dir = opendir(Directory);
+    //DIR *dir;
+    //dir = opendir(Directory);
     // Check whether the directory exists
     // If directory exists, save in global variable
     //if (getcwd(Directory, sizeof(Directory)) == NULL)
-    if (dir == NULL) {    
-        fprintf(stderr, "Please enter an existing directory.\n");
-        return;
-    }
-    else {
-        // add / before adding next part of path
-        path = strcat(currentdir, "/");
-        strcat(path, Directory);
+    // if (dir == NULL) {    
+    //     fprintf(stderr, "Please enter an existing directory.\n");
+    //     return;
+    // }
+    // else {
+    //     // add / before adding next part of path
+    //     path = strcat(currentdir, "/");
+    //     strcat(path, Directory);
 
-        strcpy(currentdir, path);
+    //     strcpy(currentdir, path);
         
-        return;
-    }
+    //     return;
+    // }
 }
 
 //Prints the value of the currentdir variable
@@ -427,24 +426,12 @@ void checkHistory(bool flag) {
 // Terminates shell and saves history file
 void byebye()
 {
-    // int i = top;
-    // while(!isempty())
-    // {
-    //     fprintf(historyFile, "%s\n", replay(i));
-    //     popCommand();
-    //     i--;
-    // }
-    // int i = 0;
-    // while(i <= top)
-    // {
-    //     fprintf(historyFile, "%s\n", replay(i));
-    //     i++;
-    // }
-    int i = top;
-    while(i >= 0)
-    {
-      fprintf(historyFile, "%s\n", replay(i));
-      i--;
+    int i = 0;
+    while(i <= top)
+    {  
+      fprintf(historyFile, "%s\n", stack[i]);
+      free(stack[i]);
+      i++;
     }
     fclose(historyFile);
     exit(0);
@@ -560,7 +547,7 @@ void background(char **command_tokens, int length) {
     // Find result of fork call.
     if(pid < 0)
     {
-        perror("Fork() failed.\n");
+        printf("Fork() failed.\n");
         return;
     }
     else if (pid == 0) 
