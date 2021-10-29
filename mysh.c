@@ -587,48 +587,6 @@ void background(char **command_tokens, int length) {
 
 }
 
-    // // Deconstruct arguments to be accepted by 
-    // // the execv function call later. 
-    // // char *args[] = {program_name, NULL};
-    // // program_name: cmd arg1 arg2 arg3
-    // // args: path cmd arg1 arg2 arg3 NULL
-    // int size = sizeof(command_tokens) / sizeof(command_tokens[0]);
-    // int i;
-
-    // for (i = 1; i < size; i++)
-    // {
-    //     strcpy(command_tokens[i - 1], command_tokens[i]);
-    // }
-    // command_tokens[size - 1] = NULL;
-
-    // // 
-    // // array of char *'s
-    // char **args = (char**)malloc(sizeof(program_name) + sizeof(char*));
-    
-    
-    
-    // // args[0] = path
-    // // args[1] = array of strings terminated by NULL
-    // //char **args = malloc()
-    // strcpy(args[0]
-
-    // // Fork parent process.
-    // int pid = fork();
-    // // Check fork condition.
-    // if (pid < 0) {
-    //     printf("Fork() failed.\n");
-    //     return;
-    // }    
-    // else if (pid == 0) {
-    //     printf("Running a program in the background: %s\n", input[0]);
-    //     execv(args[0], args);
-    // }
-    // else {
-    //     printf("Error.\n");
-    //     return;
-    // }
-
-
 // Made by Joey
 int isFullPath(char *path) {
     if (path == NULL)
