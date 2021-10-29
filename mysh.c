@@ -169,6 +169,7 @@ void init_shell() {
     printf("\n");
 
     char line[MAXLIST];
+    ssize_t line_len;
     int i = 0;
 
     if(getcwd(currentdir, sizeof(currentdir)) == NULL) 
@@ -179,8 +180,9 @@ void init_shell() {
 
     if(historyFile = fopen("history.txt", "r+"))
     {
-        while (fscanf(historyFile, "%s", line) != EOF) 
+        while ( fgets(line, MAXLIST, historyFile)) 
         {
+            line[strcspn(line, "\n")] = 0;
             pushCommand(line);
         }
     }
@@ -311,8 +313,6 @@ int ownCmdHandler(char *buffer) {
 }
 
 void process_commands(void) {
-    char line[1000]; 
-
     int bufsize = MAXCOM;
     char *buffer = malloc(sizeof(char) * bufsize);
     char **command = malloc(bufsize * sizeof(char*));
@@ -360,24 +360,6 @@ void movetoDir(char *Directory) {
         strcpy(currentdir, path);
     }
 
-    //DIR *dir;
-    //dir = opendir(Directory);
-    // Check whether the directory exists
-    // If directory exists, save in global variable
-    //if (getcwd(Directory, sizeof(Directory)) == NULL)
-    // if (dir == NULL) {    
-    //     fprintf(stderr, "Please enter an existing directory.\n");
-    //     return;
-    // }
-    // else {
-    //     // add / before adding next part of path
-    //     path = strcat(currentdir, "/");
-    //     strcat(path, Directory);
-
-    //     strcpy(currentdir, path);
-        
-    //     return;
-    // }
 }
 
 //Prints the value of the currentdir variable
