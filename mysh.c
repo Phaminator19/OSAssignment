@@ -19,7 +19,7 @@
 #include <signal.h>
 #include <stdbool.h>
 
-#define MAXLIST 1000000 //max number of letters to be supported
+#define MAXLIST 100000 //max number of letters to be supported
 #define MAXCOM 100 // max number of commands to be supported
 #define clear() printf("\033[H\033[J")
        
@@ -285,25 +285,28 @@ int ownCmdHandler(char *buffer) {
     switch (switchOwnArg) {
     case 1:
         pushCommand(buffer);
-        for (i = 0; i <= parsedLength; i++)
+        for (i = 0; i < parsedLength; i++)
            free(parsed[i]);
         free(parsed);
         byebye();
     case 2:
         movetoDir(parsed[1]);
-        for (i = 0; i <= parsedLength; i++)
+        printf("before freeing\n");
+        for (i = 0; i < parsedLength; i++)
            free(parsed[i]);
+        printf("after freeing arrays\n");
         free(parsed);
+        printf("after freeing all\n");
         return 1;
     case 3:
         background(parsed, parsedLength);
-        for (i = 0; i <= parsedLength; i++)
+        for (i = 0; i < parsedLength; i++)
            free(parsed[i]);
         free(parsed);
         return 1;
     case 4:
         start(parsed, parsedLength);
-        for (i = 0; i <= parsedLength; i++)
+        for (i = 0; i < parsedLength; i++)
             free(parsed[i]);
         free(parsed);
         return 1;
@@ -316,7 +319,7 @@ int ownCmdHandler(char *buffer) {
         {
             checkHistory(false);
         }
-        for (i = 0; i <= parsedLength; i++)
+        for (i = 0; i < parsedLength; i++)
             free(parsed[i]);
         free(parsed);
         return 1;
@@ -329,7 +332,7 @@ int ownCmdHandler(char *buffer) {
         {
             ownCmdHandler(cmd);
         }
-        for (i = 0; i <= parsedLength; i++)
+        for (i = 0; i < parsedLength; i++)
            free(parsed[i]);
         free(parsed);
         free(cmd);
@@ -343,13 +346,13 @@ int ownCmdHandler(char *buffer) {
         {
             printf("Incorrect arguments. Please input a valid pid.\n");
         }
-        for (i = 0; i <= parsedLength; i++)
+        for (i = 0; i < parsedLength; i++)
             free(parsed[i]);
         free(parsed);
         return 1;
     case 8:
         whereami();
-        for (i = 0; i <= parsedLength; i++)
+        for (i = 0; i < parsedLength; i++)
             free(parsed[i]);
         free(parsed);
         return 1;
