@@ -133,19 +133,18 @@ Quang
 char** parse_command_line(char *line) {
     int bufsize = MAXLIST; 
     int position = 0;
-    char **tokens = malloc(bufsize * sizeof(char*));
-    char *token = NULL; 
-    int i;
-    char linetoread[MAXLIST];
 
-    strcpy(linetoread, line);
+    char **tokens = (char **)malloc(bufsize * sizeof(char*));
+    char *token = (char *)malloc(sizeof(char) * bufsize); 
+    int i, j;
 
-    token = strtok(linetoread, " ");
+    token = strtok(line, " ");
 
     while (token != NULL)
     {
         tokens[position] = (char *)malloc(sizeof(token));
-        tokens[position] = token;
+        // NOTE: changed to strcpy.
+        strcpy(tokens[position], token);
         position++;
 
         if (position >= MAXCOM) {
@@ -161,7 +160,12 @@ char** parse_command_line(char *line) {
         token = strtok(NULL, " ");
     }
     //tokens[position] = (char *)malloc(sizeof(token));
+    free(token);
     tokens[position] = NULL;
+    // for (i = 0; i < position; i++)
+    // {
+    //     printf("token: %s\n", tokens[i]);
+    // }
     return tokens;
 }
 
@@ -180,24 +184,6 @@ void init_shell() {
     
     printf("\n");
     sleep(1);
-
-    int NoOfOwnCmds = 8;
-    char* ListOfOwnCmds[NoOfOwnCmds];
-    ListOfOwnCmds[0] = "byebye";
-    ListOfOwnCmds[1] = "movetodir";
-    ListOfOwnCmds[2] = "background";
-    ListOfOwnCmds[3] = "start";
-    ListOfOwnCmds[4] = "history";
-    ListOfOwnCmds[5] = "replay";
-    ListOfOwnCmds[6] = "dalek";
-    ListOfOwnCmds[7] = "whereami";
-
-    printf("List of commands:\n");
-    for(int i = 0; i < NoOfOwnCmds; i++) {
-        printf("# %d: %s\n", i, ListOfOwnCmds[i]);
-    }
-       
-    printf("\n");
     
     char line[MAXLIST];
     ssize_t line_len;
@@ -229,7 +215,7 @@ Quang
 */
 char *read_line(void) {
     int bufsize = MAXCOM;
-    char *buffer = malloc(bufsize * sizeof(char));
+    char *buffer = (char *)malloc(bufsize * sizeof(char));
     int position = 0;
     int c;
     
@@ -275,24 +261,19 @@ Joey
 */
 int ownCmdHandler(char *buffer) {
     int NoOfOwnCmds = 8, i, switchOwnArg = 0;
-    char* ListOfOwnCmds[NoOfOwnCmds];
-    char* cmd = NULL;
+
+    char *ListOfOwnCmds[] = {"byebye", "movetodir", "background", "start",
+                             "history", "replay", "dalek", "whereami"};
+    //char* ListOfOwnCmds[NoOfOwnCmds];
+    char* cmd = (char *)malloc(sizeof(char) * MAXLIST); // was set to NULL
     int parsedLength = -1;
     char **parsed;
 
     parsed = parse_command_line(buffer);
 
+    // Get the parsed length.
     while(parsed[++parsedLength] != NULL) {
     }
-
-    ListOfOwnCmds[0] = "byebye";
-    ListOfOwnCmds[1] = "movetodir";
-    ListOfOwnCmds[2] = "background";
-    ListOfOwnCmds[3] = "start";
-    ListOfOwnCmds[4] = "history";
-    ListOfOwnCmds[5] = "replay";
-    ListOfOwnCmds[6] = "dalek";
-    ListOfOwnCmds[7] = "whereami";
 
     for (i = 0; i < NoOfOwnCmds; i++) {
         if (strcmp(parsed[0], ListOfOwnCmds[i]) == 0) {
@@ -304,26 +285,26 @@ int ownCmdHandler(char *buffer) {
     switch (switchOwnArg) {
     case 1:
         pushCommand(buffer);
-        for (i = 0; i < parsedLength; i++)
-        //    free(parsed[i]);
-        //free(parsed);
+        for (i = 0; i <= parsedLength; i++)
+           free(parsed[i]);
+        free(parsed);
         byebye();
     case 2:
         movetoDir(parsed[1]);
-        for (i = 0; i < parsedLength; i++)
-         //   free(parsed[i]);
-        //free(parsed);
+        for (i = 0; i <= parsedLength; i++)
+           free(parsed[i]);
+        free(parsed);
         return 1;
     case 3:
         background(parsed, parsedLength);
-        //for (i = 0; i < parsedLength; i++)
-        //    free(parsed[i]);
+        for (i = 0; i <= parsedLength; i++)
+           free(parsed[i]);
         free(parsed);
         return 1;
     case 4:
         start(parsed, parsedLength);
-        // for (i = 0; i < parsedLength; i++)
-        //     free(parsed[i]);
+        for (i = 0; i <= parsedLength; i++)
+            free(parsed[i]);
         free(parsed);
         return 1;
     case 5:
@@ -335,8 +316,8 @@ int ownCmdHandler(char *buffer) {
         {
             checkHistory(false);
         }
-        //for (i = 0; i < parsedLength; i++)
-            //free(parsed[i]);
+        for (i = 0; i <= parsedLength; i++)
+            free(parsed[i]);
         free(parsed);
         return 1;
     case 6:
@@ -348,9 +329,10 @@ int ownCmdHandler(char *buffer) {
         {
             ownCmdHandler(cmd);
         }
-        //for (i = 0; i < parsedLength; i++)
-        //    free(parsed[i]);
+        for (i = 0; i <= parsedLength; i++)
+           free(parsed[i]);
         free(parsed);
+        free(cmd);
         return 1;
     case 7:
         if (parsedLength && atoi(parsed[1]))
@@ -361,14 +343,14 @@ int ownCmdHandler(char *buffer) {
         {
             printf("Incorrect arguments. Please input a valid pid.\n");
         }
-        // for (i = 0; i < parsedLength; i++)
-        //     free(parsed[i]);
+        for (i = 0; i <= parsedLength; i++)
+            free(parsed[i]);
         free(parsed);
         return 1;
     case 8:
         whereami();
-        // for (i = 0; i < parsedLength; i++)
-        //     free(parsed[i]);
+        for (i = 0; i <= parsedLength; i++)
+            free(parsed[i]);
         free(parsed);
         return 1;
     default:
@@ -385,7 +367,7 @@ Joey
 */
 void process_commands(void) {
     int bufsize = MAXCOM;
-    // char *buffer = malloc(sizeof(char) * bufsize);
+    //char *buffer = malloc(sizeof(char) * bufsize);
     char * buffer;
 
     while(1) {
@@ -437,6 +419,7 @@ void movetoDir(char *parsed_arg) {
     }
     else {
         // Copy temp into currentdir
+        printf("Path you are saving into currentdir: %s\n", path);
         strcpy(currentdir, path);
     }
 
@@ -536,9 +519,9 @@ void start(char **command_tokens, int length)
     pid_t pid = fork();
     int i;
     char path[MAXLIST];
-    char** command = (char **)malloc(sizeof(char *) * (length + 1));
+    char** command = (char **)malloc(sizeof(char *) * length);
     FILE * file;
-
+    printf("length: %d\n", length);
     // Find result of fork call.
     if(pid < 0)
     {
@@ -554,11 +537,13 @@ void start(char **command_tokens, int length)
 
     for (i = 1; i < length; i++)
     {
-        command[i - 1] = malloc(sizeof(command_tokens[i]));
+        command[i - 1] = (char *)malloc(sizeof(command_tokens[i]));
         strcpy(command[i - 1], command_tokens[i]);
+        //printf("cmd[i-1]: %s\n", command[i-1]);
     }
     
-    command[length] = NULL;
+    //command[length] = (char *)malloc(sizeof(char) * MAXLIST);
+    command[length - 1] = NULL;
 
     strcpy(path, command[0]);
     
@@ -582,18 +567,31 @@ void start(char **command_tokens, int length)
         {
             printf("Program could not be found.\n");
         }
-        else if(execv(path, command) == -1)
+        else
         {
-            printf("Program could not be executed.\n");
+            // Close the open file.
+            fclose(file);
+            if (execv(path, command) == -1)
+            {
+                 printf("path: %s\n", path);
+                //printf("com: %s\n", command);
+                printf("Program could not be executed.\n");
+            }
         }
     }
 
-    for (i = 0; i < length; i++)
+    printf("582\n");
+
+    for (i = 0; i < length - 1; i++)
     {
+        printf("i %d\n", i);
         free(command[i]);
+        printf("freed\n");
     }
-    
+    printf("588\n");
+
     free(command);
+    
 }
 
 //It is similar to the run command, but it immediately prints the PID of the program it 
@@ -609,11 +607,11 @@ void background(char **command_tokens, int length) {
     FILE *file;
     int i;
     char path[MAXLIST];
-    char** command = (char **)malloc(sizeof(char *) * (length + 1));
+    char** command = (char **)malloc(sizeof(char *) * length);
 
     for (i = 1; i < length; i++)
     {
-        command[i - 1] = malloc(sizeof(command_tokens[i]));
+        command[i - 1] = (char *)malloc(sizeof(command_tokens[i]));
         strcpy(command[i - 1], command_tokens[i]);
     }
 
@@ -622,7 +620,8 @@ void background(char **command_tokens, int length) {
         printf("PID: %d\n", pid);
     }
     
-    command[length] = NULL;
+    //command[length] = (char *)malloc(sizeof(char) * MAXLIST);
+    command[length - 1] = NULL;
 
     strcpy(path, command[0]);
 
@@ -650,18 +649,32 @@ void background(char **command_tokens, int length) {
         {
             printf("Program could not be found.\n");
         }
-        else if(execv(path, command) == -1)
+        else
         {
-            printf("Program could not be executed.\n");
+            // Close the open file.
+            fclose(file);
+            if (execv(path, command) == -1)
+            {
+                 printf("path: %s\n", path);
+                //printf("com: %s\n", command);
+                printf("%s\n", command[0]);
+                printf("Program could not be executed.\n");
+            }
         }
     }
 
-    for (i = 0; i < length; i++)
+    printf("%s\n", command[0]);
+
+    for (i = 0; i < length - 1; i++)
     {
         free(command[i]);
     }
 
+    printf("%s\n", command[0]);
+
     free(command);
+
+    printf("664\n");
 }
 
 /*
