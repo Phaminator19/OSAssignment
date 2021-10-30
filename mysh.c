@@ -385,11 +385,12 @@ Joey
 */
 void process_commands(void) {
     int bufsize = MAXCOM;
-    char *buffer = malloc(sizeof(char) * bufsize);
+    // char *buffer = malloc(sizeof(char) * bufsize);
+    char * buffer;
 
     while(1) {
-        printf("# ");
-        buffer = read_line();
+        // printf("# ");
+        buffer = readline("# ");
         
         ownCmdHandler(buffer);
         pushCommand(buffer);
