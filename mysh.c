@@ -1,5 +1,11 @@
-/*COP4600 - Homework_2
-/*myshell - making my own linux shell in C */
+/*  Contributers:
+    Quang Pham
+    Zachary Kirksey
+    Lauren Bravine
+    
+    COP4600 - Homework_2 
+    myshell - making a custom linux shell in C 
+*/
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -13,16 +19,13 @@
 #include <signal.h>
 #include <stdbool.h>
 
-#define MAXLIST 10000 //max number of letters to be supported
+#define MAXLIST 1000000 //max number of letters to be supported
 #define MAXCOM 100 // max number of commands to be supported
 #define clear() printf("\033[H\033[J")
        
 char* stack[MAXCOM];     
 int top = -1;
 FILE *historyFile;
-
-//char* directory_stack[MAXCOM];
-//int d_top = -1;
 
 int isempty();
 int isfull();
@@ -35,7 +38,7 @@ char *read_line(void);
 void execArgs(char** parsed);
 int ownCmdHandler(char *buffer);
 void process_commands(void);
-void movetoDir(char *Directory);
+void movetoDir(char *parsed_arg);
 void whereami();
 void clearHistory();
 void checkHistory(bool flag);
@@ -45,9 +48,12 @@ void start(char **command_tokens, int length);
 void background(char **command_tokens, int length);
 int isFullPath(char *path);
 
-char currentdir[1024];
+char currentdir[MAXLIST];
 
-// Made by Zac
+/*
+Contributers:
+Zac
+*/
 int isempty() {
 
    if(top == -1)
@@ -56,7 +62,10 @@ int isempty() {
       return 0;
 }
 
-// Made by Zac   
+/*
+Contributers:
+Zac
+*/   
 int isfull() {
 
    if(top == MAXCOM)
@@ -65,7 +74,11 @@ int isfull() {
       return 0;
 }
 
-// Made by Zac
+/*
+Contributers:
+Zac
+Lauren
+*/
 char* replay(int num) {
     if(num > top || num < 0)
     {
@@ -75,7 +88,11 @@ char* replay(int num) {
     return stack[top - num];
 }
 
-// Made by Zac
+/*
+Contributers:
+Zac
+Lauren
+*/
 char* popCommand() {
     char* data;
 	
@@ -91,7 +108,11 @@ char* popCommand() {
     }
 }
 
-// Made by Zac
+/*
+Contributers:
+Zac
+Lauren
+*/
 void pushCommand(char* data) {
     if(!isfull()) 
     {
@@ -105,7 +126,10 @@ void pushCommand(char* data) {
     }
 }
 
-//Parse the command line
+/*
+Contributers:
+Quang
+*/
 char** parse_command_line(char *line) {
     int bufsize = MAXLIST; 
     int position = 0;
@@ -139,6 +163,11 @@ char** parse_command_line(char *line) {
     return tokens;
 }
 
+/*
+Contributers:
+Zac
+Quang
+*/
 //Function to do a greeting shell
 void init_shell() {
     clear();
@@ -165,9 +194,9 @@ void init_shell() {
     for(int i = 0; i < NoOfOwnCmds; i++) {
         printf("# %d: %s\n", i, ListOfOwnCmds[i]);
     }
-
+       
     printf("\n");
-
+    
     char line[MAXLIST];
     ssize_t line_len;
     int i = 0;
@@ -192,6 +221,10 @@ void init_shell() {
     }
 }
 
+/*
+Contributers:
+Quang
+*/
 char *read_line(void) {
     int bufsize = MAXCOM;
     char *buffer = malloc(bufsize * sizeof(char));
@@ -217,7 +250,8 @@ char *read_line(void) {
             buffer[position] = c;
         }
         position++;
-    
+        
+        //if the length of the string is over our limit, then we have a realloc to create more blocks for them. 
         if (position >= MAXCOM) {
             bufsize += MAXCOM;
             buffer = realloc(buffer, bufsize);
@@ -231,10 +265,15 @@ char *read_line(void) {
 
 }
 
+/*
+Contributers:
+Zac
+Lauren
+Joey
+*/
 int ownCmdHandler(char *buffer) {
     int NoOfOwnCmds = 8, i, switchOwnArg = 0;
     char* ListOfOwnCmds[NoOfOwnCmds];
-    //char* username;
     char* cmd = NULL;
     int parsedLength = -1;
     char **parsed;
@@ -263,15 +302,19 @@ int ownCmdHandler(char *buffer) {
     switch (switchOwnArg) {
     case 1:
         pushCommand(buffer);
+        free(parsed);
         byebye();
     case 2:
         movetoDir(parsed[1]);
+        free(parsed);
         return 1;
     case 3:
         background(parsed, parsedLength);
+        free(parsed);
         return 1;
     case 4:
         start(parsed, parsedLength);
+        free(parsed);
         return 1;
     case 5:
         if(parsedLength > 1 && strcmp(parsed[1], "-c") == 0)
@@ -282,6 +325,7 @@ int ownCmdHandler(char *buffer) {
         {
             checkHistory(false);
         }
+        free(parsed);
         return 1;
     case 6:
         if (parsedLength > 1 && atoi(parsed[1]) >= 0)
@@ -292,6 +336,7 @@ int ownCmdHandler(char *buffer) {
         {
             ownCmdHandler(cmd);
         }
+        free(parsed);
         return 1;
     case 7:
         if (parsedLength && atoi(parsed[1]))
@@ -302,9 +347,11 @@ int ownCmdHandler(char *buffer) {
         {
             printf("Incorrect arguments. Please input a valid pid.\n");
         }
+        free(parsed);
         return 1;
     case 8:
         whereami();
+        free(parsed);
         return 1;
     default:
         break;
@@ -312,10 +359,15 @@ int ownCmdHandler(char *buffer) {
     return 0;
 }
 
+/*
+Contributers:
+Zac
+Quang
+Joey
+*/
 void process_commands(void) {
     int bufsize = MAXCOM;
     char *buffer = malloc(sizeof(char) * bufsize);
-    char **command = malloc(bufsize * sizeof(char*));
 
     while(1) {
         printf("# ");
@@ -323,32 +375,41 @@ void process_commands(void) {
         
         ownCmdHandler(buffer);
         pushCommand(buffer);
+        free(buffer);
     }
 }
 
-// Edited by Joey
+/*
+Contributers:
+Zac
+Joey
+*/
 // getting ../ to work and 
 // changing the directory
-void movetoDir(char *Directory) {
-    char path[MAXCOM];
-    char temp[MAXCOM];
+void movetoDir(char *parsed_arg) {
+    char path[MAXLIST];
+    char temp[MAXLIST];
+    char directory[MAXLIST];
 
+    strcpy(directory, parsed_arg);
+
+    // Lauren
     // Check input string
-    if((Directory == NULL) || (Directory[0] == '\0')) {
-        fprintf(stderr, "No directory entered.\n");
+    if((directory == NULL) || (directory[0] == '\0')) {
+        printf("No directory entered.\n");
         return;
     }
 
     // Check if full path or relative
-    if(isFullPath(Directory) == 0) {
+    if(isFullPath(directory) == 0) {
         // Append to current dir
         strcpy(temp, currentdir);
         strcat(temp, "/");
-        strcat(temp, Directory);
+        strcat(temp, directory);
     }
     else {
         // Change the current directory
-        strcpy(temp, Directory); 
+        strcpy(temp, directory); 
     }
     // Check if path exists
     if (realpath(temp, path) == NULL) {
@@ -362,10 +423,14 @@ void movetoDir(char *Directory) {
 
 }
 
+/*
+Contributers:
+Quang or Joey?
+*/
 //Prints the value of the currentdir variable
 void whereami() {
     if(currentdir == NULL) {
-        printf("No where.\n");
+        printf("Nowhere.\n");
         return;
     }
     else {
@@ -374,7 +439,10 @@ void whereami() {
     
 }
 
-// Made by Zac
+/*
+Contributers:
+Zac
+*/
 // Clears history when -c flag is given
 void clearHistory()
 {
@@ -385,7 +453,10 @@ void clearHistory()
     historyFile = fopen("history.txt", "w");
 }
 
-// Made by Zac
+/*
+Contributers:
+Zac
+*/
 //prints out the recently typed commands in reverse order with numbers.
 void checkHistory(bool flag) {
     
@@ -404,7 +475,11 @@ void checkHistory(bool flag) {
     return;
 }
 
-// Made by Zac
+/*
+Contributers:
+Zac
+Lauren
+*/
 // Terminates shell and saves history file
 void byebye()
 {
@@ -430,13 +505,13 @@ void dalek(int pid)
     }
 }
 
-//void dalekall() {
-    
-//    printf("Exterminating %d processes: %d %d %d", )
-//}
-
-//made by Quang
-// is this relative or direct path?
+/*
+Contributers:
+Quang
+Zac
+Lauren
+*/
+//the start function.
 void start(char **command_tokens, int length) 
 {
     pid_t pid = fork();
@@ -503,7 +578,11 @@ void start(char **command_tokens, int length)
 //It is similar to the run command, but it immediately prints the PID of the program it 
 // started, and returns the prompt. 
 // Execute a program in the background
-// Made by Joey
+/*
+Contributers:
+Joey
+Zac
+*/
 void background(char **command_tokens, int length) {
     pid_t pid = fork();
     FILE *file;
@@ -569,7 +648,10 @@ void background(char **command_tokens, int length) {
 
 }
 
-// Made by Joey
+/*
+Contributers:
+Joey
+*/
 int isFullPath(char *path) {
     if (path == NULL)
     {
@@ -584,7 +666,8 @@ int isFullPath(char *path) {
 }
 
 int main() {
-    init_shell();
+    // currentdir = malloc(sizeof(char) * MAXLIST);
+    init_shell(); //initialize the shell
     char line[MAXLIST];
 
     //this line will process the command after initialize the shell
