@@ -517,7 +517,7 @@ void start(char **command_tokens, int length)
     pid_t pid = fork();
     int i;
     char path[MAXLIST];
-    char* command[length+1];
+    char** command = (char **)malloc(sizeof(char *) * (length + 1));
     FILE * file;
 
     // Find result of fork call.
@@ -588,7 +588,7 @@ void background(char **command_tokens, int length) {
     FILE *file;
     int i;
     char path[MAXLIST];
-    char* command[length+1];
+    char** command = (char **)malloc(sizeof(char *) * (length + 1));
 
     for (i = 1; i < length; i++)
     {
