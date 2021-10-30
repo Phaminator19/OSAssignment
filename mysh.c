@@ -117,7 +117,7 @@ void pushCommand(char* data) {
     if(!isfull()) 
     {
         top = top + 1;
-        stack[top] = malloc(sizeof(data));   
+        stack[top] = (char *)malloc(sizeof(data));   
         strcpy(stack[top], data);
     } 
     else 
@@ -144,6 +144,7 @@ char** parse_command_line(char *line) {
 
     while (token != NULL)
     {
+        tokens[position] = (char *)malloc(sizeof(token));
         tokens[position] = token;
         position++;
 
@@ -159,6 +160,7 @@ char** parse_command_line(char *line) {
 
         token = strtok(NULL, " ");
     }
+    //tokens[position] = (char *)malloc(sizeof(token));
     tokens[position] = NULL;
     return tokens;
 }
@@ -302,18 +304,26 @@ int ownCmdHandler(char *buffer) {
     switch (switchOwnArg) {
     case 1:
         pushCommand(buffer);
-        free(parsed);
+        for (i = 0; i < parsedLength; i++)
+        //    free(parsed[i]);
+        //free(parsed);
         byebye();
     case 2:
         movetoDir(parsed[1]);
-        free(parsed);
+        for (i = 0; i < parsedLength; i++)
+         //   free(parsed[i]);
+        //free(parsed);
         return 1;
     case 3:
         background(parsed, parsedLength);
+        //for (i = 0; i < parsedLength; i++)
+        //    free(parsed[i]);
         free(parsed);
         return 1;
     case 4:
         start(parsed, parsedLength);
+        // for (i = 0; i < parsedLength; i++)
+        //     free(parsed[i]);
         free(parsed);
         return 1;
     case 5:
@@ -325,6 +335,8 @@ int ownCmdHandler(char *buffer) {
         {
             checkHistory(false);
         }
+        //for (i = 0; i < parsedLength; i++)
+            //free(parsed[i]);
         free(parsed);
         return 1;
     case 6:
@@ -336,6 +348,8 @@ int ownCmdHandler(char *buffer) {
         {
             ownCmdHandler(cmd);
         }
+        //for (i = 0; i < parsedLength; i++)
+        //    free(parsed[i]);
         free(parsed);
         return 1;
     case 7:
@@ -347,10 +361,14 @@ int ownCmdHandler(char *buffer) {
         {
             printf("Incorrect arguments. Please input a valid pid.\n");
         }
+        // for (i = 0; i < parsedLength; i++)
+        //     free(parsed[i]);
         free(parsed);
         return 1;
     case 8:
         whereami();
+        // for (i = 0; i < parsedLength; i++)
+        //     free(parsed[i]);
         free(parsed);
         return 1;
     default:
@@ -573,6 +591,8 @@ void start(char **command_tokens, int length)
     {
         free(command[i]);
     }
+    
+    free(command);
 }
 
 //It is similar to the run command, but it immediately prints the PID of the program it 
@@ -639,13 +659,8 @@ void background(char **command_tokens, int length) {
     {
         free(command[i]);
     }
-    
-    if (pid == 0) 
-    {
-        printf("the given program could not be found\n");
-        return;
-    }
 
+    free(command);
 }
 
 /*
