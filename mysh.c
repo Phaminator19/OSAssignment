@@ -419,7 +419,6 @@ void movetoDir(char *parsed_arg) {
     }
     else {
         // Copy temp into currentdir
-        printf("Path you are saving into currentdir: %s\n", path);
         strcpy(currentdir, path);
     }
 
@@ -521,7 +520,7 @@ void start(char **command_tokens, int length)
     char path[MAXLIST];
     char** command = (char **)malloc(sizeof(char *) * length);
     FILE * file;
-    printf("length: %d\n", length);
+    // printf("length: %d\n", length);
     // Find result of fork call.
     if(pid < 0)
     {
@@ -573,7 +572,7 @@ void start(char **command_tokens, int length)
             fclose(file);
             if (execv(path, command) == -1)
             {
-                printf("path: %s\n", path);
+                // printf("path: %s\n", path);
                 //printf("com: %s\n", command);
                 printf("Program could not be executed.\n");
             }
@@ -652,15 +651,15 @@ void background(char **command_tokens, int length) {
             fclose(file);
             if (execv(path, command) == -1)
             {
-                printf("path: %s\n", path);
-                //printf("com: %s\n", command);
-                printf("%s\n", command[0]);
+                // printf("path: %s\n", path);
+                // //printf("com: %s\n", command);
+                // printf("%s\n", command[0]);
                 printf("Program could not be executed.\n");
             }
         }
     }
 
-    printf("%s\n", command[0]);
+    // printf("%s\n", command[0]);
 
     for (i = 0; i < length - 1; i++)
     {
