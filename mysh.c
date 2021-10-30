@@ -291,12 +291,9 @@ int ownCmdHandler(char *buffer) {
         byebye();
     case 2:
         movetoDir(parsed[1]);
-        printf("before freeing\n");
         for (i = 0; i < parsedLength; i++)
            free(parsed[i]);
-        printf("after freeing arrays\n");
         free(parsed);
-        printf("after freeing all\n");
         return 1;
     case 3:
         background(parsed, parsedLength);
@@ -576,22 +573,19 @@ void start(char **command_tokens, int length)
             fclose(file);
             if (execv(path, command) == -1)
             {
-                 printf("path: %s\n", path);
+                printf("path: %s\n", path);
                 //printf("com: %s\n", command);
                 printf("Program could not be executed.\n");
             }
         }
     }
 
-    printf("582\n");
-
     for (i = 0; i < length - 1; i++)
     {
         printf("i %d\n", i);
         free(command[i]);
-        printf("freed\n");
+        // printf("freed\n");
     }
-    printf("588\n");
 
     free(command);
     
@@ -658,7 +652,7 @@ void background(char **command_tokens, int length) {
             fclose(file);
             if (execv(path, command) == -1)
             {
-                 printf("path: %s\n", path);
+                printf("path: %s\n", path);
                 //printf("com: %s\n", command);
                 printf("%s\n", command[0]);
                 printf("Program could not be executed.\n");
@@ -673,11 +667,10 @@ void background(char **command_tokens, int length) {
         free(command[i]);
     }
 
-    printf("%s\n", command[0]);
+    // printf("%s\n", command[0]);
 
     free(command);
 
-    printf("664\n");
 }
 
 /*
