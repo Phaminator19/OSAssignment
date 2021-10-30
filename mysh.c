@@ -25,7 +25,7 @@
        
 char* stack[MAXCOM];     
 int top = -1;
-FILE *historyFile;
+//FILE *historyFile;
 
 int isempty();
 int isfull();
@@ -184,8 +184,9 @@ void init_shell() {
     
     printf("\n");
     sleep(1);
-    
-    char line[MAXLIST];
+
+    FILE *historyFile;
+    char *line = (char *)malloc(sizeof(char) * MAXLIST);
     ssize_t line_len;
     int i = 0;
 
@@ -197,16 +198,28 @@ void init_shell() {
 
     if(historyFile = fopen("history.txt", "r+"))
     {
-        while ( fgets(line, MAXLIST, historyFile)) 
+        // while (fgets(line, MAXLIST, historyFile)) 
+        // {
+        //     line[strcspn(line, "\n")] = 0;
+        //     printf("pushing onto stack: %s\n", line);
+        //     pushCommand(line);
+        // }
+        while (getline(&line, &line_len, historyFile) > 0)
         {
-            line[strcspn(line, "\n")] = 0;
+            printf("pushing onto stack: %s\n", line);
             pushCommand(line);
         }
+    
     }
     else
     {
         historyFile = fopen("history.txt", "w+");
     }
+
+    printf("get here\n");
+    free(line);
+    printf("2");
+    fclose(historyFile);
 }
 
 /*
@@ -369,12 +382,13 @@ void process_commands(void) {
     int bufsize = MAXCOM;
     //char *buffer = malloc(sizeof(char) * bufsize);
     char * buffer;
-
+    char temp[MAXLIST];
     while(1) {
         // printf("# ");
         buffer = readline("# ");
-        
-        ownCmdHandler(buffer);
+        strcpy(temp, buffer);
+        ownCmdHandler(temp);
+        printf("pushing a command: %s\n", buffer);
         pushCommand(buffer);
         free(buffer);
     }
@@ -451,7 +465,7 @@ void clearHistory()
     {
         popCommand();
     }
-    historyFile = fopen("history.txt", "w");
+    //historyFile = fopen("history.txt", "w");
 }
 
 /*
@@ -484,6 +498,7 @@ Lauren
 // Terminates shell and saves history file
 void byebye()
 {
+    FILE *historyFile = fopen("history.txt", "w+");
     int i = 0;
     while(i <= top)
     {  
